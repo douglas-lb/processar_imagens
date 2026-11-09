@@ -1,4 +1,4 @@
-# Reconhecimento de Dígitos Manuscritos
+# Processar imagens
 
 Projeto em Python para processamento de imagens de números manuscritos, com o objetivo de criar um dataset próprio para treinar uma rede neural de classificação de dígitos de 0 a 9.
 
@@ -7,10 +7,10 @@ As imagens são processadas para seguir o padrão do MNIST, utilizando resoluç�
 ## Estrutura do projeto
 
 ```text
-reconhecimento-digitos/
+processar_imagens/
 │
 ├── venv/                  # Ambiente virtual
-├── fotos_originais/       # Fotografias dos números manuscritos
+├── fotos/                 # Fotografias dos números manuscritos
 ├── dataset/               # Dataset processado
 │   ├── 0/
 │   ├── 1/
@@ -28,13 +28,13 @@ reconhecimento-digitos/
 ### 1. Clone o repositório
 
 ```bash
-git clone URL_DO_REPOSITORIO
+git clone https://github.com/douglas-lb/processar_imagens.git
 ```
 
 Entre na pasta do projeto:
 
 ```bash
-cd reconhecimento-digitos
+cd processar_imagens
 ```
 
 ### 2. Crie o ambiente virtual
@@ -69,8 +69,6 @@ São aceitos os formatos:
 - JPEG
 - PNG
 - BMP
-
-As fotografias podem ser tiradas utilizando diferentes celulares, pois o programa realiza o processamento e a padronização das imagens.
 
 ### 2. Execute o programa
 
