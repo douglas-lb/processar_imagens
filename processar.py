@@ -5,10 +5,6 @@ import random
 from pathlib import Path
 
 
-# ============================================================
-# CONFIGURAÇÕES DO PROJETO
-# ============================================================
-
 # Pasta onde estão as fotografias originais dos números.
 PASTA_ENTRADA = Path("fotos")
 
@@ -30,11 +26,6 @@ SEMENTE = 42
 random.seed(SEMENTE)
 np.random.seed(SEMENTE)
 
-
-# ============================================================
-# CRIAÇÃO DAS PASTAS
-# ============================================================
-
 def criar_pastas():
     """
     Cria uma pasta para cada classe, de 0 até 9.
@@ -47,11 +38,6 @@ def criar_pastas():
         pasta = PASTA_SAIDA / str(numero)
 
         pasta.mkdir(exist_ok=True)
-
-
-# ============================================================
-# PROCESSAMENTO DA IMAGEM ORIGINAL
-# ============================================================
 
 def processar_imagem(caminho):
     """
@@ -70,18 +56,11 @@ def processar_imagem(caminho):
         print(f"Não foi possível abrir: {caminho}")
         return None
 
-    # --------------------------------------------------------
-    # 1. CONVERSÃO PARA ESCALA DE CINZA
-    # --------------------------------------------------------
-
+    # conversão para escala de cinza
     imagem_cinza = cv2.cvtColor(
         imagem,
         cv2.COLOR_BGR2GRAY
     )
-
-    # --------------------------------------------------------
-    # 2. REDUÇÃO DE RUÍDOS
-    # --------------------------------------------------------
 
     # Aplica um desfoque leve para reduzir pequenas
     # imperfeições e ruídos da fotografia.
@@ -91,18 +70,7 @@ def processar_imagem(caminho):
         0
     )
 
-    # --------------------------------------------------------
-    # 3. BINARIZAÇÃO
-    # --------------------------------------------------------
-
-    # O método Otsu calcula automaticamente um limite
-    # para separar o número do fundo.
-    #
-    # THRESH_BINARY_INV:
-    #   - Número escuro vira branco (255).
-    #   - Fundo claro vira preto (0).
-    #
-    # Isso deixa o número branco e o fundo preto.
+    # binarização: deixa o número branco e o fundo preto.
 
     _, imagem_binaria = cv2.threshold(
         imagem_suave,
@@ -110,10 +78,6 @@ def processar_imagem(caminho):
         255,
         cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
     )
-
-    # --------------------------------------------------------
-    # 4. IDENTIFICAÇÃO DA ÁREA DO NÚMERO
-    # --------------------------------------------------------
 
     # Localiza os pixels brancos, que representam
     # o número manuscrito.
@@ -134,10 +98,7 @@ def processar_imagem(caminho):
         x:x + largura
     ]
 
-    # --------------------------------------------------------
-    # 5. CENTRALIZAÇÃO DO NÚMERO
-    # --------------------------------------------------------
-
+    # centraliza o numero
     # Cria uma imagem quadrada preta.
     lado = max(largura, altura)
 
@@ -156,10 +117,6 @@ def processar_imagem(caminho):
         inicio_x:inicio_x + largura
     ] = recorte
 
-    # --------------------------------------------------------
-    # 6. REDIMENSIONAMENTO
-    # --------------------------------------------------------
-
     # Redimensiona o número para aproximadamente 20x20.
     # INTER_AREA ajuda na redução da imagem.
     numero_redimensionado = cv2.resize(
@@ -168,11 +125,7 @@ def processar_imagem(caminho):
         interpolation=cv2.INTER_AREA
     )
 
-    # --------------------------------------------------------
-    # 7. CRIAÇÃO DA IMAGEM FINAL 28x28
-    # --------------------------------------------------------
-
-    # Cria uma imagem completamente preta.
+    # Cria uma imagem completamente preta 28x28.
     imagem_final = np.zeros(
         (TAMANHO_FINAL, TAMANHO_FINAL),
         dtype=np.uint8
@@ -189,11 +142,6 @@ def processar_imagem(caminho):
 
     return imagem_final
 
-
-# ============================================================
-# AUMENTO DE DADOS (DATA AUGMENTATION)
-# ============================================================
-
 def aumentar_dados(imagem):
     """
     Gera variações da imagem original.
@@ -207,10 +155,6 @@ def aumentar_dados(imagem):
     altura, largura = imagem.shape
 
     for _ in range(QUANTIDADE_AUMENTOS):
-
-        # ----------------------------------------------------
-        # 1. ROTAÇÃO
-        # ----------------------------------------------------
 
         # Rotaciona levemente a imagem.
         angulo = random.uniform(-12, 12)
@@ -231,10 +175,6 @@ def aumentar_dados(imagem):
             borderValue=0
         )
 
-        # ----------------------------------------------------
-        # 2. DESLOCAMENTO
-        # ----------------------------------------------------
-
         # Desloca o número alguns pixels para os lados.
         deslocamento_x = random.randint(-2, 2)
         deslocamento_y = random.randint(-2, 2)
@@ -252,10 +192,6 @@ def aumentar_dados(imagem):
             borderValue=0
         )
 
-        # ----------------------------------------------------
-        # 3. CONTRASTE E BRILHO
-        # ----------------------------------------------------
-
         # Modifica levemente o contraste e o brilho.
         alpha = random.uniform(0.85, 1.15)
         beta = random.randint(-10, 10)
@@ -271,10 +207,6 @@ def aumentar_dados(imagem):
 
     return imagens_aumentadas
 
-
-# ============================================================
-# SALVAMENTO DAS IMAGENS
-# ============================================================
 
 def salvar_imagem(imagem, numero, contador):
     """
@@ -293,11 +225,6 @@ def salvar_imagem(imagem, numero, contador):
 
     cv2.imwrite(str(caminho), imagem)
 
-
-# ============================================================
-# EXIBIÇÃO DA IMAGEM PARA CONFERÊNCIA
-# ============================================================
-
 def visualizar_imagem(imagem, nome):
     """
     Amplia a imagem para facilitar a visualização.
@@ -315,10 +242,6 @@ def visualizar_imagem(imagem, nome):
 
     cv2.waitKey(1)
 
-
-# ============================================================
-# EXECUÇÃO PRINCIPAL
-# ============================================================
 
 def executar():
 
@@ -401,22 +324,16 @@ def executar():
             cv2.destroyAllWindows()
             continue
 
-        # ----------------------------------------------------
-        # SALVA A IMAGEM ORIGINAL PROCESSADA
-        # ----------------------------------------------------
-
         contadores[numero] += 1
 
+        # salva imagens
         salvar_imagem(
             imagem,
             numero,
             contadores[numero]
         )
 
-        # ----------------------------------------------------
-        # GERA E SALVA AS VARIAÇÕES
-        # ----------------------------------------------------
-
+        # gera variações da imagem
         imagens_aumentadas = aumentar_dados(imagem)
 
         for imagem_aumentada in imagens_aumentadas:
@@ -440,9 +357,6 @@ def executar():
 
         cv2.destroyAllWindows()
 
-    # --------------------------------------------------------
-    # RESULTADO FINAL
-    # --------------------------------------------------------
 
     print("\n" + "=" * 50)
     print("PROCESSAMENTO CONCLUÍDO!")
@@ -462,11 +376,6 @@ def executar():
     print(f"\nTotal de imagens: {total}")
 
     cv2.destroyAllWindows()
-
-
-# ============================================================
-# INICIALIZAÇÃO DO PROGRAMA
-# ============================================================
 
 if __name__ == "__main__":
     executar()
