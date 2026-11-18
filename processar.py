@@ -1,30 +1,61 @@
-import cv2
-import numpy as np
+import argparse
+import csv
+import json
 import random
+import re
 
 from pathlib import Path
 
+import cv2
+import numpy as np
+
+from preprocess import (
+    SEMENTE,
+    TAMANHO_FINAL,
+    aumentar_digito,
+    preprocessar_digito,
+)
+
+
+# Pasta do projeto (permite executar o script de qualquer diretório).
+PASTA_PROJETO = Path(__file__).resolve().parent
 
 # Pasta onde estão as fotografias originais dos números.
-PASTA_ENTRADA = Path("fotos")
+PASTA_ENTRADA = PASTA_PROJETO / "fotos"
 
 # Pasta onde serão armazenadas as imagens processadas.
-PASTA_SAIDA = Path("dataset")
+PASTA_SAIDA = PASTA_PROJETO / "dataset"
 
-# Tamanho final das imagens.
-TAMANHO_FINAL = 28
+# Arquivos gerados junto com o dataset.
+ARQUIVO_METADATA = PASTA_SAIDA / "metadata.csv"
+ARQUIVO_SPLITS = PASTA_SAIDA / "splits.json"
 
-# Tamanho aproximado que o número ocupará dentro da imagem.
-TAMANHO_NUMERO = 20
+COLUNAS_METADATA = ["arquivo", "classe", "source_id", "eh_aumento"]
+
+# Extensões aceitas (comparadas sem diferenciar maiúsculas/minúsculas).
+EXTENSOES = {".jpg", ".jpeg", ".png", ".bmp"}
 
 # Quantidade de variações geradas para cada fotografia.
 QUANTIDADE_AUMENTOS = 5
 
-# Semente para tornar os resultados reproduzíveis.
-SEMENTE = 42
+# Proporções da divisão treino / validação / teste.
+PROPORCAO_VALIDACAO = 0.1
+PROPORCAO_TESTE = 0.1
+
+# Número mínimo de fotografias de uma classe para que ela
+# tenha pelo menos uma fotografia na validação e no teste.
+MINIMO_FOTOS_PARA_DIVIDIR = 5
+
+# Prefixo do nome do arquivo que indica o rótulo.
+# Exemplos: "7_foto.jpg", "7-xxx.png", "7.jpg".
+PADRAO_PREFIXO = re.compile(r"^([0-9])(?:[_\-\s.]|$)")
 
 random.seed(SEMENTE)
 np.random.seed(SEMENTE)
+
+# Gerador próprio do aumento de dados (reprodutível).
+GERADOR_AUMENTO = random.Random(SEMENTE)
+
 
 def criar_pastas():
     """
@@ -39,6 +70,7 @@ def criar_pastas():
 
         pasta.mkdir(exist_ok=True)
 
+
 def processar_imagem(caminho):
     """
     Recebe uma fotografia e transforma em uma imagem 28x28.
@@ -47,100 +79,16 @@ def processar_imagem(caminho):
         - Fundo preto.
         - Número branco.
         - Resolução de 28x28 pixels.
+        - Somente os valores 0 e 255.
     """
 
-    # Lê a fotografia.
-    imagem = cv2.imread(str(caminho))
+    imagem = preprocessar_digito(caminho)
 
     if imagem is None:
-        print(f"Não foi possível abrir: {caminho}")
-        return None
+        print(f"Não foi possível abrir ou encontrar o número em: {caminho}")
 
-    # conversão para escala de cinza
-    imagem_cinza = cv2.cvtColor(
-        imagem,
-        cv2.COLOR_BGR2GRAY
-    )
+    return imagem
 
-    # Aplica um desfoque leve para reduzir pequenas
-    # imperfeições e ruídos da fotografia.
-    imagem_suave = cv2.GaussianBlur(
-        imagem_cinza,
-        (5, 5),
-        0
-    )
-
-    # binarização: deixa o número branco e o fundo preto.
-
-    _, imagem_binaria = cv2.threshold(
-        imagem_suave,
-        0,
-        255,
-        cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-    )
-
-    # Localiza os pixels brancos, que representam
-    # o número manuscrito.
-    pontos = cv2.findNonZero(imagem_binaria)
-
-    # Se nenhum pixel branco for encontrado,
-    # não existe conteúdo para processar.
-    if pontos is None:
-        return None
-
-    # Calcula o menor retângulo que contém todos
-    # os pixels brancos.
-    x, y, largura, altura = cv2.boundingRect(pontos)
-
-    # Recorta somente a região que contém o número.
-    recorte = imagem_binaria[
-        y:y + altura,
-        x:x + largura
-    ]
-
-    # centraliza o numero
-    # Cria uma imagem quadrada preta.
-    lado = max(largura, altura)
-
-    imagem_quadrada = np.zeros(
-        (lado, lado),
-        dtype=np.uint8
-    )
-
-    # Calcula as posições para centralizar o recorte.
-    inicio_x = (lado - largura) // 2
-    inicio_y = (lado - altura) // 2
-
-    # Coloca o número branco no centro do quadrado preto.
-    imagem_quadrada[
-        inicio_y:inicio_y + altura,
-        inicio_x:inicio_x + largura
-    ] = recorte
-
-    # Redimensiona o número para aproximadamente 20x20.
-    # INTER_AREA ajuda na redução da imagem.
-    numero_redimensionado = cv2.resize(
-        imagem_quadrada,
-        (TAMANHO_NUMERO, TAMANHO_NUMERO),
-        interpolation=cv2.INTER_AREA
-    )
-
-    # Cria uma imagem completamente preta 28x28.
-    imagem_final = np.zeros(
-        (TAMANHO_FINAL, TAMANHO_FINAL),
-        dtype=np.uint8
-    )
-
-    # Calcula as posições para centralizar o número.
-    posicao = (TAMANHO_FINAL - TAMANHO_NUMERO) // 2
-
-    # Insere o número branco no centro.
-    imagem_final[
-        posicao:posicao + TAMANHO_NUMERO,
-        posicao:posicao + TAMANHO_NUMERO
-    ] = numero_redimensionado
-
-    return imagem_final
 
 def aumentar_dados(imagem):
     """
@@ -150,62 +98,100 @@ def aumentar_dados(imagem):
     a identidade do número manuscrito.
     """
 
-    imagens_aumentadas = []
+    return aumentar_digito(
+        imagem,
+        quantidade=QUANTIDADE_AUMENTOS,
+        rng=GERADOR_AUMENTO
+    )
 
-    altura, largura = imagem.shape
 
-    for _ in range(QUANTIDADE_AUMENTOS):
+def listar_fotografias():
+    """
+    Localiza as fotografias da pasta de entrada, aceitando
+    extensões em maiúsculas ou minúsculas (.jpg, .JPG, .Png...).
+    """
 
-        # Rotaciona levemente a imagem.
-        angulo = random.uniform(-12, 12)
+    if not PASTA_ENTRADA.exists():
+        return []
 
-        centro = (largura // 2, altura // 2)
+    arquivos = [
+        caminho
+        for caminho in PASTA_ENTRADA.iterdir()
+        if caminho.is_file() and caminho.suffix.lower() in EXTENSOES
+    ]
 
-        matriz_rotacao = cv2.getRotationMatrix2D(
-            centro,
-            angulo,
-            1.0
+    # Ordena os arquivos para manter uma sequência.
+    return sorted(arquivos, key=lambda caminho: caminho.name.lower())
+
+
+def sugerir_rotulo(caminho):
+    """
+    Sugere o rótulo a partir do prefixo do nome do arquivo.
+
+    Exemplos:
+        7_foto.jpg -> 7
+        3-teste.png -> 3
+        foto.jpg -> None
+    """
+
+    correspondencia = PADRAO_PREFIXO.match(Path(caminho).name)
+
+    if correspondencia is None:
+        return None
+
+    return int(correspondencia.group(1))
+
+
+def perguntar_rotulo(sugestao):
+    """
+    Pergunta ao usuário o número da imagem.
+
+    Retorna o número (0-9) ou None se o usuário pular a imagem.
+    """
+
+    if sugestao is not None:
+        print(f"Sugestão pelo nome do arquivo: {sugestao}")
+        pergunta = (
+            f"Enter confirma {sugestao}, digite 0-9 para corrigir "
+            f"ou S para pular: "
         )
+    else:
+        pergunta = "Qual número está na imagem (0-9 ou S)? "
 
-        imagem_variada = cv2.warpAffine(
-            imagem,
-            matriz_rotacao,
-            (largura, altura),
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=0
-        )
+    while True:
 
-        # Desloca o número alguns pixels para os lados.
-        deslocamento_x = random.randint(-2, 2)
-        deslocamento_y = random.randint(-2, 2)
+        resposta = input(pergunta).strip().lower()
 
-        matriz_deslocamento = np.float32([
-            [1, 0, deslocamento_x],
-            [0, 1, deslocamento_y]
-        ])
+        if resposta == "" and sugestao is not None:
+            return sugestao
 
-        imagem_variada = cv2.warpAffine(
-            imagem_variada,
-            matriz_deslocamento,
-            (largura, altura),
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=0
-        )
+        if resposta == "s":
+            return None
 
-        # Modifica levemente o contraste e o brilho.
-        alpha = random.uniform(0.85, 1.15)
-        beta = random.randint(-10, 10)
+        if resposta in [str(i) for i in range(10)]:
+            return int(resposta)
 
-        imagem_variada = cv2.convertScaleAbs(
-            imagem_variada,
-            alpha=alpha,
-            beta=beta
-        )
+        print("Digite um número entre 0 e 9 ou S.")
 
-        # Armazena a imagem aumentada.
-        imagens_aumentadas.append(imagem_variada)
 
-    return imagens_aumentadas
+def proximo_contador(numero):
+    """
+    Retorna o maior índice já usado na pasta da classe, para que
+    novas imagens nunca sobrescrevam imagens existentes.
+    """
+
+    padrao = re.compile(rf"^{numero}_(\d+)\.png$")
+
+    maior = 0
+
+    for caminho in (PASTA_SAIDA / str(numero)).glob("*.png"):
+
+        correspondencia = padrao.match(caminho.name)
+
+        if correspondencia:
+            maior = max(maior, int(correspondencia.group(1)))
+
+    return maior
 
 
 def salvar_imagem(imagem, numero, contador):
@@ -215,6 +201,8 @@ def salvar_imagem(imagem, numero, contador):
     Exemplo:
         dataset/0/0_00001.png
         dataset/1/1_00001.png
+
+    Retorna o caminho relativo à pasta do dataset (ex.: "0/0_00001.png").
     """
 
     pasta = PASTA_SAIDA / str(numero)
@@ -225,6 +213,167 @@ def salvar_imagem(imagem, numero, contador):
 
     cv2.imwrite(str(caminho), imagem)
 
+    return f"{numero}/{nome_arquivo}"
+
+
+def carregar_metadata():
+    """
+    Lê o dataset/metadata.csv, se existir.
+    """
+
+    if not ARQUIVO_METADATA.exists():
+        return []
+
+    with open(ARQUIVO_METADATA, newline="", encoding="utf-8") as arquivo:
+        return list(csv.DictReader(arquivo))
+
+
+def registrar_metadata(linhas):
+    """
+    Acrescenta linhas ao dataset/metadata.csv.
+
+    Cada linha: arquivo, classe, source_id, eh_aumento.
+    """
+
+    novo = not ARQUIVO_METADATA.exists()
+
+    with open(ARQUIVO_METADATA, "a", newline="", encoding="utf-8") as arquivo:
+
+        escritor = csv.DictWriter(arquivo, fieldnames=COLUNAS_METADATA)
+
+        if novo:
+            escritor.writeheader()
+
+        escritor.writerows(linhas)
+
+
+def gerar_splits():
+    """
+    Divide o dataset em treino (80%), validação (10%) e teste (10%)
+    POR source_id: todas as imagens derivadas da mesma fotografia
+    (original + aumentos) ficam sempre no mesmo conjunto.
+
+    A divisão é feita separadamente em cada classe (estratificada).
+    Classes com menos de MINIMO_FOTOS_PARA_DIVIDIR fotografias ficam
+    inteiramente no treino.
+    """
+
+    linhas = carregar_metadata()
+
+    if not linhas:
+        print("metadata.csv vazio ou inexistente; splits.json não foi gerado.")
+        return None
+
+    # Agrupa as fotografias originais por classe.
+    fontes_por_classe = {}
+    arquivos_por_fonte = {}
+
+    for linha in linhas:
+
+        source_id = linha["source_id"]
+
+        fontes_por_classe.setdefault(int(linha["classe"]), set()).add(source_id)
+        arquivos_por_fonte.setdefault(source_id, []).append(linha["arquivo"])
+
+    gerador = random.Random(SEMENTE)
+
+    fontes = {"treino": [], "validacao": [], "teste": []}
+
+    for classe in sorted(fontes_por_classe):
+
+        ids = sorted(fontes_por_classe[classe])
+        gerador.shuffle(ids)
+
+        quantidade = len(ids)
+
+        quantidade_teste = int(quantidade * PROPORCAO_TESTE + 0.5)
+        quantidade_validacao = int(quantidade * PROPORCAO_VALIDACAO + 0.5)
+
+        if quantidade >= MINIMO_FOTOS_PARA_DIVIDIR:
+            quantidade_teste = max(1, quantidade_teste)
+            quantidade_validacao = max(1, quantidade_validacao)
+        else:
+            quantidade_teste = 0
+            quantidade_validacao = 0
+
+        fontes["teste"].extend(ids[:quantidade_teste])
+        fontes["validacao"].extend(
+            ids[quantidade_teste:quantidade_teste + quantidade_validacao]
+        )
+        fontes["treino"].extend(ids[quantidade_teste + quantidade_validacao:])
+
+    splits = {
+        "semente": SEMENTE,
+        "estrategia": "por_source_id_estratificado_por_classe",
+        "proporcoes": {
+            "treino": 1 - PROPORCAO_VALIDACAO - PROPORCAO_TESTE,
+            "validacao": PROPORCAO_VALIDACAO,
+            "teste": PROPORCAO_TESTE,
+        },
+        "source_ids": {
+            nome: sorted(ids) for nome, ids in fontes.items()
+        },
+    }
+
+    for nome, ids in fontes.items():
+        splits[nome] = sorted(
+            arquivo
+            for source_id in ids
+            for arquivo in arquivos_por_fonte[source_id]
+        )
+
+    with open(ARQUIVO_SPLITS, "w", encoding="utf-8") as arquivo:
+        json.dump(splits, arquivo, ensure_ascii=False, indent=2)
+
+    print("\nDivisão salva em dataset/splits.json (por source_id):")
+
+    for nome in ("treino", "validacao", "teste"):
+        print(
+            f"  {nome}: {len(fontes[nome])} fotografias, "
+            f"{len(splits[nome])} imagens"
+        )
+
+    return splits
+
+
+def limpar_dataset():
+    """
+    Remove as imagens geradas, o metadata.csv e o splits.json.
+    """
+
+    for numero in range(10):
+        for caminho in (PASTA_SAIDA / str(numero)).glob("*.png"):
+            caminho.unlink()
+
+    for caminho in (ARQUIVO_METADATA, ARQUIVO_SPLITS):
+        if caminho.exists():
+            caminho.unlink()
+
+
+def avisar_imagens_sem_metadata(linhas):
+    """
+    Avisa sobre imagens antigas que não estão no metadata.csv
+    (por exemplo, geradas por versões anteriores do script).
+    Elas não entram no splits.json.
+    """
+
+    registradas = {linha["arquivo"] for linha in linhas}
+
+    orfas = [
+        caminho
+        for numero in range(10)
+        for caminho in (PASTA_SAIDA / str(numero)).glob("*.png")
+        if f"{numero}/{caminho.name}" not in registradas
+    ]
+
+    if orfas:
+        print(
+            f"\nAVISO: {len(orfas)} imagens em dataset/ não estão no "
+            f"metadata.csv e serão ignoradas pelo splits.json."
+        )
+        print("Use 'python processar.py --refazer' para gerar tudo de novo.")
+
+
 def visualizar_imagem(imagem, nome):
     """
     Amplia a imagem para facilitar a visualização.
@@ -234,148 +383,195 @@ def visualizar_imagem(imagem, nome):
 
     imagem_ampliada = cv2.resize(
         imagem,
-        (280, 280),
+        (TAMANHO_FINAL * 10, TAMANHO_FINAL * 10),
         interpolation=cv2.INTER_NEAREST
     )
 
-    cv2.imshow(nome, imagem_ampliada)
+    try:
+        cv2.imshow(nome, imagem_ampliada)
+        cv2.waitKey(1)
+    except cv2.error:
+        print("(Não foi possível abrir a janela de visualização.)")
 
-    cv2.waitKey(1)
+
+def fechar_janelas():
+    try:
+        cv2.destroyAllWindows()
+    except cv2.error:
+        pass
 
 
 def executar():
 
     criar_pastas()
 
-    # Localiza todas as fotografias da pasta de entrada.
-    extensoes = ["*.jpg", "*.jpeg", "*.png", "*.bmp"]
-
-    arquivos = []
-
-    for extensao in extensoes:
-        arquivos.extend(
-            PASTA_ENTRADA.glob(extensao)
-        )
-
-    # Ordena os arquivos para manter uma sequência.
-    arquivos = sorted(arquivos)
+    arquivos = listar_fotografias()
 
     if not arquivos:
         print("Nenhuma fotografia encontrada!")
         return
 
-    # Contador individual para cada classe.
+    # Fotografias já rotuladas em execuções anteriores são puladas.
+    metadata = carregar_metadata()
+    ja_processadas = {linha["source_id"] for linha in metadata}
+
+    avisar_imagens_sem_metadata(metadata)
+
+    pendentes = [
+        caminho for caminho in arquivos
+        if caminho.name not in ja_processadas
+    ]
+
+    # Contador individual para cada classe (continua de onde parou).
     contadores = {
-        numero: 0 for numero in range(10)
+        numero: proximo_contador(numero) for numero in range(10)
     }
+
+    geradas = {numero: 0 for numero in range(10)}
 
     print("=" * 50)
     print("PROCESSAMENTO DO DATASET")
     print("=" * 50)
 
     print(f"Fotografias encontradas: {len(arquivos)}")
+    print(f"Já processadas anteriormente: {len(arquivos) - len(pendentes)}")
+    print(f"Pendentes: {len(pendentes)}")
 
     print("\nDigite o número correspondente à imagem.")
+    print("Se o nome começar com o número (ex.: 7_foto.jpg),")
+    print("pressione Enter para aceitar a sugestão.")
     print("Digite S para pular a fotografia.")
     print("=" * 50)
 
-    # Percorre todas as fotografias.
-    for indice, caminho in enumerate(arquivos):
+    try:
+        # Percorre todas as fotografias pendentes.
+        for indice, caminho in enumerate(pendentes):
 
-        print("\n" + "=" * 50)
+            print("\n" + "=" * 50)
 
-        print(
-            f"Imagem {indice + 1}/{len(arquivos)}: "
-            f"{caminho.name}"
-        )
-
-        # Processa a fotografia.
-        imagem = processar_imagem(caminho)
-
-        if imagem is None:
-            print("Não foi possível processar essa imagem.")
-            continue
-
-        # Mostra a imagem processada.
-        visualizar_imagem(
-            imagem,
-            "Imagem processada - Fundo preto"
-        )
-
-        # Solicita ao usuário o número correspondente.
-        while True:
-
-            resposta = input(
-                "Qual número está na imagem (0-9 ou S)? "
-            ).strip().lower()
-
-            if resposta == "s":
-                print("Imagem ignorada.")
-                break
-
-            if resposta in [str(i) for i in range(10)]:
-                numero = int(resposta)
-                break
-
-            print("Digite um número entre 0 e 9 ou S.")
-
-        # Se o usuário escolheu pular, continua.
-        if resposta == "s":
-            cv2.destroyAllWindows()
-            continue
-
-        contadores[numero] += 1
-
-        # salva imagens
-        salvar_imagem(
-            imagem,
-            numero,
-            contadores[numero]
-        )
-
-        # gera variações da imagem
-        imagens_aumentadas = aumentar_dados(imagem)
-
-        for imagem_aumentada in imagens_aumentadas:
-
-            contadores[numero] += 1
-
-            salvar_imagem(
-                imagem_aumentada,
-                numero,
-                contadores[numero]
+            print(
+                f"Imagem {indice + 1}/{len(pendentes)}: "
+                f"{caminho.name}"
             )
 
-        print(
-            f"Imagem salva na classe {numero}."
-        )
+            # Processa a fotografia.
+            imagem = processar_imagem(caminho)
 
-        print(
-            f"Total de imagens geradas: "
-            f"{QUANTIDADE_AUMENTOS + 1}"
-        )
+            if imagem is None:
+                print("Não foi possível processar essa imagem.")
+                continue
 
-        cv2.destroyAllWindows()
+            # Mostra a imagem processada.
+            visualizar_imagem(
+                imagem,
+                "Imagem processada - Fundo preto"
+            )
 
+            # Solicita ao usuário o número correspondente.
+            numero = perguntar_rotulo(sugerir_rotulo(caminho))
+
+            fechar_janelas()
+
+            if numero is None:
+                print("Imagem ignorada.")
+                continue
+
+            source_id = caminho.name
+
+            # salva a imagem original e as variações
+            imagens = [imagem] + aumentar_dados(imagem)
+
+            linhas = []
+
+            for posicao, imagem_salvar in enumerate(imagens):
+
+                contadores[numero] += 1
+
+                arquivo = salvar_imagem(
+                    imagem_salvar,
+                    numero,
+                    contadores[numero]
+                )
+
+                linhas.append({
+                    "arquivo": arquivo,
+                    "classe": numero,
+                    "source_id": source_id,
+                    "eh_aumento": int(posicao > 0),
+                })
+
+            # Grava a cada fotografia para não perder rótulos
+            # caso o programa seja interrompido.
+            registrar_metadata(linhas)
+
+            geradas[numero] += len(imagens)
+
+            print(f"Imagem salva na classe {numero}.")
+            print(f"Total de imagens geradas: {len(imagens)}")
+
+    except KeyboardInterrupt:
+        print("\n\nProcessamento interrompido pelo usuário.")
+
+    finally:
+        fechar_janelas()
 
     print("\n" + "=" * 50)
     print("PROCESSAMENTO CONCLUÍDO!")
     print("=" * 50)
 
-    print("\nQuantidade de imagens por classe:")
+    print("\nImagens geradas nesta execução, por classe:")
 
     for numero in range(10):
 
         print(
             f"Número {numero}: "
-            f"{contadores[numero]} imagens"
+            f"{geradas[numero]} imagens"
         )
 
-    total = sum(contadores.values())
+    print(f"\nTotal de imagens nesta execução: {sum(geradas.values())}")
 
-    print(f"\nTotal de imagens: {total}")
+    gerar_splits()
 
-    cv2.destroyAllWindows()
+
+def ler_argumentos():
+
+    parser = argparse.ArgumentParser(
+        description="Cria um dataset de dígitos 28x28 a partir de fotografias."
+    )
+
+    parser.add_argument(
+        "--refazer",
+        action="store_true",
+        help="apaga as imagens, o metadata.csv e o splits.json e processa tudo de novo",
+    )
+
+    parser.add_argument(
+        "--apenas-splits",
+        action="store_true",
+        help="somente gera novamente o dataset/splits.json a partir do metadata.csv",
+    )
+
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
-    executar()
+
+    argumentos = ler_argumentos()
+
+    if argumentos.apenas_splits:
+        gerar_splits()
+
+    else:
+        if argumentos.refazer:
+            confirmacao = input(
+                "Apagar todas as imagens de dataset/ e recomeçar? (s/n) "
+            ).strip().lower()
+
+            if confirmacao != "s":
+                print("Operação cancelada.")
+                raise SystemExit(0)
+
+            criar_pastas()
+            limpar_dataset()
+
+        executar()

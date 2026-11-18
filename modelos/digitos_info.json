@@ -1,0 +1,33 @@
+{
+  "data": "2026-11-17T23:16:24",
+  "dataset": "MNIST",
+  "divisao": "MNIST oficial (validação = 6000 imagens do treino)",
+  "epocas_solicitadas": 5,
+  "semente": 42,
+  "quantidades": {
+    "treino": 54000,
+    "validacao": 6000,
+    "teste": 10000
+  },
+  "acuracia_teste": 0.9915000200271606,
+  "entrada": {
+    "forma": [
+      1,
+      28,
+      28,
+      1
+    ],
+    "tipo": "float32",
+    "valores": "0 a 255 (binário 0/255), fundo preto e número branco",
+    "preprocessamento": "preprocess.preprocessar_digito"
+  },
+  "saida": "probabilidades softmax para as classes 0..9",
+  "arquivos": {
+    "keras": "digitos.keras",
+    "tflite": "digitos.tflite"
+  },
+  "versoes": {
+    "tensorflow": "2.21.0",
+    "keras": "3.15.1"
+  }
+}
