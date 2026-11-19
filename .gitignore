@@ -1,3 +1,12 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
+
+# Pesos do modelo: o .keras é regenerado com treinar_modelo.py.
+# O .tflite (pequeno), o digitos_info.json e a matriz de confusão podem ser versionados.
+modelos/*.keras
+modelos/*.h5
+
+# Capturas da webcam (camera_webcam.py)
+capturas/

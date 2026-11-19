@@ -1,2 +1,9 @@
 numpy==2.5.4
 opencv-python==5.0.0.93
+
+# Treinamento / avaliação / previsão (treinar_modelo.py, avaliar.py, prever.py).
+# O TensorFlow exige Python 3.10–3.13 (ainda não suporta 3.14).
+tensorflow-cpu==2.21.0; sys_platform == "linux"
+tensorflow==2.21.0; sys_platform != "linux"
+scikit-learn==1.9.1
+matplotlib==3.11.2
