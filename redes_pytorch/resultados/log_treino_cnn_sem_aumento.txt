@@ -1,0 +1,23 @@
+
+=== cnn | 140,458 parâmetros | aumento=não ===
+época  1 | treino: perda 0.3085 acc 0.9360 | val: perda 0.0697 acc 0.9794 | 40s  <- melhor
+época  2 | treino: perda 0.0558 acc 0.9856 | val: perda 0.0884 acc 0.9736 | 86s
+época  3 | treino: perda 0.0390 acc 0.9888 | val: perda 0.0567 acc 0.9816 | 87s  <- melhor
+época  4 | treino: perda 0.0326 acc 0.9907 | val: perda 0.0397 acc 0.9894 | 54s  <- melhor
+época  5 | treino: perda 0.0282 acc 0.9917 | val: perda 0.0316 acc 0.9902 | 91s  <- melhor
+época  6 | treino: perda 0.0223 acc 0.9932 | val: perda 0.0454 acc 0.9864 | 108s
+época  7 | treino: perda 0.0203 acc 0.9939 | val: perda 0.0366 acc 0.9902 | 107s
+época  8 | treino: perda 0.0186 acc 0.9944 | val: perda 0.0300 acc 0.9912 | 110s  <- melhor
+época  9 | treino: perda 0.0159 acc 0.9950 | val: perda 0.0282 acc 0.9916 | 109s  <- melhor
+época 10 | treino: perda 0.0156 acc 0.9953 | val: perda 0.0334 acc 0.9896 | 108s
+época 11 | treino: perda 0.0133 acc 0.9959 | val: perda 0.0313 acc 0.9902 | 106s
+época 12 | treino: perda 0.0113 acc 0.9966 | val: perda 0.0295 acc 0.9908 | 105s
+época 13 | treino: perda 0.0072 acc 0.9978 | val: perda 0.0220 acc 0.9932 | 103s  <- melhor
+época 14 | treino: perda 0.0051 acc 0.9986 | val: perda 0.0229 acc 0.9932 | 102s
+época 15 | treino: perda 0.0037 acc 0.9991 | val: perda 0.0232 acc 0.9932 | 102s
+época 16 | treino: perda 0.0040 acc 0.9988 | val: perda 0.0254 acc 0.9934 | 100s  <- melhor
+época 17 | treino: perda 0.0044 acc 0.9985 | val: perda 0.0284 acc 0.9928 | 101s
+época 18 | treino: perda 0.0037 acc 0.9989 | val: perda 0.0283 acc 0.9922 | 102s
+época 19 | treino: perda 0.0042 acc 0.9989 | val: perda 0.0249 acc 0.9936 | 101s  <- melhor
+época 20 | treino: perda 0.0040 acc 0.9990 | val: perda 0.0296 acc 0.9926 | 102s
+Melhor época: 19 (val acc 0.9936) -> C:\Users\Alana\UFC\ia\trabalho 2\pp02\pesos\cnn_sem_aumento.pt
