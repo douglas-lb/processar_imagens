@@ -1,0 +1,63 @@
+
+=== mlp | 235,146 parâmetros | aumento=não ===
+época  1 | treino: perda 0.4080 acc 0.8812 | val: perda 0.1899 acc 0.9454 | 2s  <- melhor
+época  2 | treino: perda 0.1660 acc 0.9505 | val: perda 0.1330 acc 0.9632 | 2s  <- melhor
+época  3 | treino: perda 0.1184 acc 0.9639 | val: perda 0.0992 acc 0.9690 | 2s  <- melhor
+época  4 | treino: perda 0.0919 acc 0.9716 | val: perda 0.0899 acc 0.9736 | 3s  <- melhor
+época  5 | treino: perda 0.0730 acc 0.9769 | val: perda 0.0780 acc 0.9760 | 3s  <- melhor
+época  6 | treino: perda 0.0623 acc 0.9805 | val: perda 0.0799 acc 0.9770 | 4s  <- melhor
+época  7 | treino: perda 0.0550 acc 0.9826 | val: perda 0.0728 acc 0.9788 | 4s  <- melhor
+época  8 | treino: perda 0.0479 acc 0.9848 | val: perda 0.0710 acc 0.9802 | 3s  <- melhor
+época  9 | treino: perda 0.0409 acc 0.9861 | val: perda 0.0812 acc 0.9778 | 3s
+época 10 | treino: perda 0.0386 acc 0.9872 | val: perda 0.0805 acc 0.9778 | 3s
+época 11 | treino: perda 0.0320 acc 0.9892 | val: perda 0.0732 acc 0.9796 | 3s
+época 12 | treino: perda 0.0233 acc 0.9929 | val: perda 0.0683 acc 0.9832 | 3s  <- melhor
+época 13 | treino: perda 0.0190 acc 0.9937 | val: perda 0.0782 acc 0.9810 | 3s
+época 14 | treino: perda 0.0161 acc 0.9948 | val: perda 0.0803 acc 0.9812 | 4s
+época 15 | treino: perda 0.0164 acc 0.9945 | val: perda 0.0813 acc 0.9806 | 3s
+época 16 | treino: perda 0.0124 acc 0.9960 | val: perda 0.0776 acc 0.9834 | 3s  <- melhor
+época 17 | treino: perda 0.0110 acc 0.9964 | val: perda 0.0777 acc 0.9832 | 3s
+época 18 | treino: perda 0.0101 acc 0.9966 | val: perda 0.0761 acc 0.9840 | 3s  <- melhor
+época 19 | treino: perda 0.0099 acc 0.9968 | val: perda 0.0800 acc 0.9830 | 3s
+época 20 | treino: perda 0.0106 acc 0.9965 | val: perda 0.0779 acc 0.9844 | 3s  <- melhor
+Melhor época: 20 (val acc 0.9844) -> C:\Users\Alana\UFC\ia\trabalho 2\pp02\pesos\mlp.pt
+
+=== lenet5 | 61,706 parâmetros | aumento=não ===
+época  1 | treino: perda 0.4036 acc 0.8778 | val: perda 0.1321 acc 0.9604 | 6s  <- melhor
+época  2 | treino: perda 0.1014 acc 0.9689 | val: perda 0.0924 acc 0.9718 | 6s  <- melhor
+época  3 | treino: perda 0.0726 acc 0.9772 | val: perda 0.0766 acc 0.9772 | 6s  <- melhor
+época  4 | treino: perda 0.0557 acc 0.9824 | val: perda 0.0602 acc 0.9794 | 7s  <- melhor
+época  5 | treino: perda 0.0472 acc 0.9855 | val: perda 0.0582 acc 0.9800 | 7s  <- melhor
+época  6 | treino: perda 0.0378 acc 0.9877 | val: perda 0.0516 acc 0.9848 | 6s  <- melhor
+época  7 | treino: perda 0.0321 acc 0.9895 | val: perda 0.0419 acc 0.9870 | 6s  <- melhor
+época  8 | treino: perda 0.0279 acc 0.9912 | val: perda 0.0406 acc 0.9876 | 7s  <- melhor
+época  9 | treino: perda 0.0243 acc 0.9922 | val: perda 0.0428 acc 0.9882 | 7s  <- melhor
+época 10 | treino: perda 0.0209 acc 0.9932 | val: perda 0.0494 acc 0.9860 | 7s
+época 11 | treino: perda 0.0208 acc 0.9932 | val: perda 0.0603 acc 0.9836 | 6s
+época 12 | treino: perda 0.0170 acc 0.9945 | val: perda 0.0554 acc 0.9840 | 6s
+época 13 | treino: perda 0.0086 acc 0.9977 | val: perda 0.0441 acc 0.9880 | 6s
+Parada antecipada: 4 épocas sem melhorar.
+Melhor época: 9 (val acc 0.9882) -> C:\Users\Alana\UFC\ia\trabalho 2\pp02\pesos\lenet5.pt
+
+=== cnn | 140,458 parâmetros | aumento=sim ===
+época  1 | treino: perda 0.4595 acc 0.8879 | val: perda 0.1346 acc 0.9598 | 78s  <- melhor
+época  2 | treino: perda 0.1132 acc 0.9687 | val: perda 0.0626 acc 0.9808 | 76s  <- melhor
+época  3 | treino: perda 0.0899 acc 0.9729 | val: perda 0.0513 acc 0.9836 | 74s  <- melhor
+época  4 | treino: perda 0.0753 acc 0.9776 | val: perda 0.0422 acc 0.9858 | 73s  <- melhor
+época  5 | treino: perda 0.0693 acc 0.9795 | val: perda 0.0309 acc 0.9904 | 78s  <- melhor
+época  6 | treino: perda 0.0641 acc 0.9803 | val: perda 0.0263 acc 0.9908 | 78s  <- melhor
+época  7 | treino: perda 0.0604 acc 0.9808 | val: perda 0.0292 acc 0.9916 | 76s  <- melhor
+época  8 | treino: perda 0.0561 acc 0.9837 | val: perda 0.0367 acc 0.9872 | 78s
+época  9 | treino: perda 0.0543 acc 0.9832 | val: perda 0.0336 acc 0.9892 | 78s
+época 10 | treino: perda 0.0543 acc 0.9836 | val: perda 0.0323 acc 0.9894 | 76s
+época 11 | treino: perda 0.0399 acc 0.9878 | val: perda 0.0173 acc 0.9936 | 76s  <- melhor
+época 12 | treino: perda 0.0406 acc 0.9880 | val: perda 0.0199 acc 0.9938 | 78s  <- melhor
+época 13 | treino: perda 0.0396 acc 0.9877 | val: perda 0.0168 acc 0.9938 | 77s
+época 14 | treino: perda 0.0387 acc 0.9882 | val: perda 0.0186 acc 0.9934 | 76s
+época 15 | treino: perda 0.0385 acc 0.9879 | val: perda 0.0160 acc 0.9944 | 76s  <- melhor
+época 16 | treino: perda 0.0381 acc 0.9883 | val: perda 0.0199 acc 0.9930 | 79s
+época 17 | treino: perda 0.0375 acc 0.9889 | val: perda 0.0170 acc 0.9944 | 76s
+época 18 | treino: perda 0.0352 acc 0.9894 | val: perda 0.0175 acc 0.9942 | 75s
+época 19 | treino: perda 0.0315 acc 0.9903 | val: perda 0.0121 acc 0.9960 | 74s  <- melhor
+época 20 | treino: perda 0.0304 acc 0.9907 | val: perda 0.0161 acc 0.9948 | 76s
+Melhor época: 19 (val acc 0.9960) -> C:\Users\Alana\UFC\ia\trabalho 2\pp02\pesos\cnn.pt
